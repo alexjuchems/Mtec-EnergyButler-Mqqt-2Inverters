@@ -1,4 +1,5 @@
 import yaml
+import os
 import time
 from pyModbusTCP.client import ModbusClient
 import logging
@@ -8,11 +9,12 @@ import json
 # ---------------------------
 # Load configuration
 # ---------------------------
-with open("C:\\Users\\Alex\\Documents\\VScodePython\\.venv\\config.yaml", "r") as f:
+# Load config from the working directory
+with open(os.path.join(os.getcwd(), "config.yaml"), "r") as f:
     config = yaml.safe_load(f)
 
-# Load register definitions
-with open("C:\\Users\\Alex\\Documents\\VScodePython\\.venv\\registers.yaml", "r") as f:
+# Load register definitions from the working directory
+with open(os.path.join(os.getcwd(), "registers.yaml"), "r") as f:
     registers = yaml.safe_load(f)
 
 # Logging
