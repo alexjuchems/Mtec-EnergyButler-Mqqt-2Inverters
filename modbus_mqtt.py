@@ -24,12 +24,31 @@ with open(os.path.join(os.getcwd(), "registers.yaml"), "r") as f:
 # ---------------------------
 # Setup MQTT
 # ---------------------------
+# MQTT connection with retry logic
 mqtt_cfg = config["mqtt"]
-client_mqtt = mqtt.Client()
+client_mqtt = mqtt.Client(client_id="modbus_mqtt", protocol=mqtt.MQTTv5)  # Use MQTTv5 to address deprecation warning
+max_retries = 5
+retry_delay = 5
+
 if mqtt_cfg.get("username"):
     client_mqtt.username_pw_set(mqtt_cfg["username"], mqtt_cfg["password"])
-client_mqtt.connect(mqtt_cfg["host"], mqtt_cfg["port"], 60)
-client_mqtt.loop_start()  # keep MQTT connection alive
+
+for attempt in range(max_retries):
+    try:
+        logging.info(f"Attempting to connect to MQTT broker at {mqtt_cfg['host']}:{mqtt_cfg['port']} (attempt {attempt+1}/{max_retries})")
+        client_mqtt.connect(mqtt_cfg["host"], mqtt_cfg["port"], 60)
+        logging.info("Successfully connected to MQTT broker")
+        break
+    except Exception as e:
+        logging.error(f"Failed to connect to MQTT broker: {e}")
+        if attempt < max_retries - 1:
+            logging.info(f"Retrying in {retry_delay} seconds...")
+            time.sleep(retry_delay)
+        else:
+            logging.critical("Max retries reached, exiting")
+            raise
+
+client_mqtt.loop_start() # keep MQTT connection alive
 
 # ---------------------------
 # Helper function to decode registers
