@@ -127,36 +127,31 @@ print("✅ MQTT discovery messages published. Check Home Assistant → Devices �
 # ---------------------------
 # Main loop: read and publish values
 # ---------------------------
-try:
-    while True:
-        for inv_name, inv in config["inverters"].items():
-            client = ModbusClient(inv["host"], port=inv["port"], timeout=5, unit_id=inv["slave"])
-            if client.open():
-                for reg_id, reg_info in registers.items():
-                    length = reg_info.get("length")
 
-                    if length:
-                        # Real Modbus register
-                        reg_address = int(reg_id)
-                        raw = client.read_holding_registers(reg_address, length)
-                        value = decode_registers(raw, reg_info)
-                    else:
-                        # Pseudo-register → calculate or use placeholder
-                        # Example placeholder:
-                        value = None  # or some computed value
+while True:
+    for inv_name, inv in config["inverters"].items():
+        client = ModbusClient(inv["host"], port=inv["port"], timeout=5, unit_id=inv["slave"])
+        if client.open():
+            for reg_id, reg_info in registers.items():
+                length = reg_info.get("length")
 
-                    # Publish the value to MQTT regardless of real/pseudo
-                    object_id = reg_info.get("mqtt", reg_id)
-                    state_topic = f"{mqtt_cfg['base_topic']}/sensor/{inv_name}/{object_id}/state"
-                    client_mqtt.publish(state_topic, str(value))
+                if length:
+                    # Real Modbus register
+                    reg_address = int(reg_id)
+                    raw = client.read_holding_registers(reg_address, length)
+                    value = decode_registers(raw, reg_info)
+                else:
+                    # Pseudo-register → calculate or use placeholder
+                    # Example placeholder:
+                    value = None  # or some computed value
 
-                client.close()
-            else:
-                print(f"❌ Failed to connect to {inv_name}")
+                # Publish the value to MQTT regardless of real/pseudo
+                object_id = reg_info.get("mqtt", reg_id)
+                state_topic = f"{mqtt_cfg['base_topic']}/sensor/{inv_name}/{object_id}/state"
+                client_mqtt.publish(state_topic, str(value))
 
-        time.sleep(1)
+            client.close()
+        else:
+            print(f"❌ Failed to connect to {inv_name}")
 
-except KeyboardInterrupt:
-    print("\nStopping...")
-    client_mqtt.loop_stop()
-    client_mqtt.disconnect()
+    time.sleep(1)
