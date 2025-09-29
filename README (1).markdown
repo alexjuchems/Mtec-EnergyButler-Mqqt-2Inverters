@@ -219,3 +219,31 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - Thanks to the open-source community for `pyModbusTCP`, `paho-mqtt`, and `pyyaml`.
 - Inspired by reverse-engineering efforts in the Photovoltaikforum and other communities.
 - Built for M-TEC EnergyButler but potentially adaptable for Wattsonic, Sunways, or Daxtrom inverters.
+
+
+
+The broker wasn’t up yet when systemd launched your service.
+
+If Mosquitto and modbus-mqtt.service start at boot, your script may start too early.
+
+Fix: add a systemd dependency so your service waits for Mosquitto.
+
+Example in /etc/systemd/system/modbus-mqtt.service:
+
+[Unit]
+Description=Modbus to MQTT Service
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/home/alex/Mtec-EnergyButler-Mqqt-2Inverters/venv/bin/python3 /home/alex/Mtec-EnergyButler-Mqqt-2Inverters/modbus_mqtt.py
+WorkingDirectory=/home/alex/Mtec-EnergyButler-Mqqt-2Inverters
+Restart=always
+User=alex
+
+[Install]
+WantedBy=multi-user.target
+
+Then reload systemd:
+sudo systemctl daemon-reexec
+sudo systemctl restart modbus-mqtt.service
