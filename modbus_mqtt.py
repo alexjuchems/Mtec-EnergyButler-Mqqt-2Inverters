@@ -5,6 +5,22 @@ from pyModbusTCP.client import ModbusClient
 import logging
 import paho.mqtt.client as mqtt
 import json
+import socket
+
+# ---------------------------
+# Helper: Wait for network
+# ---------------------------
+def wait_for_network(host, port, timeout=60):
+    """Wait until network route to broker is available"""
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            with socket.create_connection((host, port), timeout=5):
+                return True
+        except OSError:
+            logging.warning(f"Network not ready, retrying connection to {host}:{port}...")
+            time.sleep(5)
+    return False
 
 # ---------------------------
 # Load configuration
@@ -27,6 +43,12 @@ with open(os.path.join(os.getcwd(), "registers.yaml"), "r") as f:
 # MQTT connection with retry logic
 mqtt_cfg = config["mqtt"]
 client_mqtt = mqtt.Client(client_id="modbus_mqtt", protocol=mqtt.MQTTv5)  # Use MQTTv5 to address deprecation warning
+
+#Waits on network before attempting to connect
+if not wait_for_network(mqtt_cfg["host"], mqtt_cfg["port"]):
+    logging.critical("Network still unreachable after timeout, exiting")
+    raise SystemExit(1)
+
 max_retries = 5
 retry_delay = 5
 
