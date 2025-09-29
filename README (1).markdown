@@ -230,19 +230,24 @@ Fix: add a systemd dependency so your service waits for Mosquitto.
 
 Example in /etc/systemd/system/modbus-mqtt.service:
 
+
 [Unit]
 Description=Modbus to MQTT Service
 After=network-online.target mosquitto.service
-Wants=network-online.target
+Requires=mosquitto.service network-online.target
 
 [Service]
-ExecStart=/home/alex/Mtec-EnergyButler-Mqqt-2Inverters/venv/bin/python3 /home/alex/Mtec-EnergyButler-Mqqt-2Inverters/modbus_mqtt.py
+Type=simple
+User=alex
+ExecStart=/home/alex/Mtec-EnergyButler-Mqqt-2Inverters/venv/bin/python3 /hom>
+ExecStartPre=/bin/sleep 5
 WorkingDirectory=/home/alex/Mtec-EnergyButler-Mqqt-2Inverters
 Restart=always
-User=alex
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
+
 
 Then reload systemd:
 sudo systemctl daemon-reexec
