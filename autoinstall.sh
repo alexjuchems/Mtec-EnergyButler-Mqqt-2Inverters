@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to auto-install a Modbus-to-MQTT script on Debian after cloning the repository
+# Script to auto-setup a Modbus-to-MQTT script on Debian after cloning the repository
 
 # Configuration
 INSTALL_DIR="$(pwd)"  # Use current directory (cloned repository)
