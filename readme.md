@@ -90,25 +90,26 @@ Creates sysetemd service for auto start
      pip install pyyaml pyModbusTCP paho-mqtt
      ```
    - Create `config.yaml`
-   ```yaml
-    mqtt:
-      host: "<MQTT_Broker_IP>"      # MQTT server IP
-      port: 1883                    # MQTT server port
-      username: "<MQTT_Username>"   # MQTT Username
-      password: "<MQTT_Password>"   # MQTT Password
-      base_topic: "homeassistant"   # MQTT topic name 
-    inverters:
-      inverter1:
-        host: "<Inverter1_IP>"  # IP address / hostname of "espressif" modbus server
-        port: 502               # Port (IMPORTANT: you need to change this to 5743 for firmware versions older than 27.52.4.0)
-        slave: 255              # Modbus slave id (usually no change required)
-      inverter2:
-        host: "<Inverter2_IP>"
-        port: 502
-        slave: 255
-    ```
+      ```yaml
+        mqtt:
+          host: "<MQTT_Broker_IP>"      # MQTT server IP
+          port: 1883                    # MQTT server port
+          username: "<MQTT_Username>"   # MQTT Username
+          password: "<MQTT_Password>"   # MQTT Password
+          base_topic: "homeassistant"   # MQTT topic name 
+        inverters:
+          inverter1:
+            host: "<Inverter1_IP>"  # IP address / hostname of "espressif" modbus server
+            port: 502               # Port (IMPORTANT: you need to change this to 5743 for firmware versions older than 27.52.4.0)
+            slave: 255              # Modbus slave id (usually no change required)
+          inverter2:
+            host: "<Inverter2_IP>"
+            port: 502
+            slave: 255
+        ```
 
 ### Configuration
+
 The `autoinstall.sh` script generates `config.yaml`:
 The resulting `config.yaml` looks like:
 ```yaml
