@@ -79,7 +79,7 @@ if ! sudo apt-get update; then
     echo "Error: Failed to update package list."
     exit 1
 fi
-if ! sudo apt-get install -y python3 python3-pip python3-venv git; then
+if ! sudo apt-get install -y python3 python3-pip python3-venv mosquitto mosquitto-clients; then
     echo "Error: Failed to install system dependencies."
     exit 1
 fi
