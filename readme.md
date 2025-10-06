@@ -82,14 +82,24 @@ Creates systemd service for auto start
      ```
    - Set up a virtual environment:
      ```bash
-     python3 -m venv venv
-     source venv/bin/activate
+     sudo python3 -m venv venv
+     source venv/bin/activate     #Chek if you need to sudo
      ```
    - Install Python packages:
      ```bash
-     pip install pyyaml pyModbusTCP paho-mqtt
+     sudo pip install pyyaml pyModbusTCP paho-mqtt    #Check if you need sudo
      ```
    - Create `config.yaml`
+      ```bash
+     sudo nano config.yaml
+     ```
+   - Permissions:
+     ```bash
+    sudo chmod 600 config.yaml
+    sudo chmod 644 registers.yaml
+    sudo chmod 755 modbus_mqtt.py
+     ```
+    
 
 ### Configuration
 
@@ -137,17 +147,17 @@ sudo journalctl -u modbus-mqtt -f
 ### Register.yaml
 Template with all supported parameters 
  ```yaml 
-  #"10000": 
-  #  name: Inverter serial number
-  #  length: 8 
-  #  type: STR
-  #  unit: "%"
-  #  scale: 10
-  #  writable: True 
-  #  mqtt: serial_no
-  #  group: config
-  #  hass_component_type: sensor
-  #  hass_device_class: battery
-  #  hass_value_template: "{{ value | round(1) }}"
-  #  hass_state_class: measurement 
+  "10000": 
+    name: Inverter serial number
+    length: 8 
+    type: STR
+    unit: "%"
+    scale: 10
+    writable: True 
+    mqtt: serial_no
+    group: config
+    hass_component_type: sensor
+    hass_device_class: battery
+    hass_value_template: "{{ value | round(1) }}"
+    hass_state_class: measurement 
   ```
