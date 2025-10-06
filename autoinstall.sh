@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to auto-install a Modbus-to-MQTT script on Debian after cloning the repository
+# Script to auto-setup a Modbus-to-MQTT script on Debian after cloning the repository
 
 # Configuration
 INSTALL_DIR="$(pwd)"  # Use current directory (cloned repository)
@@ -153,13 +153,14 @@ CURRENT_USER=$(whoami)
 cat << EOF | sudo tee /etc/systemd/system/$SERVICE_NAME.service
 [Unit]
 Description=Modbus to MQTT Service
-After=network-online.target
+After=network-online.target mosquitto.service
+Requires=mosquitto.service network-online.target
 
 [Service]
-ExecStart=$VENV_DIR/bin/python3 $INSTALL_DIR/$SCRIPT_NAME
+ExecStartPre=/bin/sleep 5
 WorkingDirectory=$INSTALL_DIR
 Restart=always
-User=$CURRENT_USER
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
