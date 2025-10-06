@@ -130,3 +130,17 @@ inverters:
     slave: 255
 ```
 As next step, you need to enable and configure the MQTT integration within Home Assistant. After that, the auto discovery should do it's job and the Inverter sensors should appear on your dashboard.
+
+## Usage
+### Managing the Service
+# Start the service
+sudo systemctl start modbus-mqtt
+
+# Stop the service
+sudo systemctl stop modbus-mqtt
+
+# Check status
+sudo systemctl status modbus-mqtt
+
+# View logs
+sudo journalctl -u modbus-mqtt -f
