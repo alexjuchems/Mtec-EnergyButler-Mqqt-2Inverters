@@ -41,15 +41,15 @@ Developed for M-TEC EnergyButler inverters (10kW-3P-3G40, 12kW-3P-3G40), this pr
 
 ### Installation
 The `autoinstall.sh` script is the easiest way to set up the project on a Debian-based system. It prompts for configuration details via the console and installs all the dependencies.
-Installs al needed dependencies
+Installs all needed dependencies
 creates a config.yaml with all the important information
 Set the right permissions for users on the files
 Creates sysetemd service for auto start 
 
-1. **Installation of Git and Mosquitto**
+1. **Installation of Git**
     ```bash
     sudo apt update
-    sudo apt install -y git mosquitto mosquitto-clients
+    sudo apt install -y git
     ```
 2. **Clone the Repository**
  ```bash
@@ -66,6 +66,7 @@ Creates sysetemd service for auto start
      - MQTT server IP.
      - MQTT username and password 
      - IP addresses for both inverters.
+   - Install python3 python3-pip python3-venv mosquitto mosquitto-clients
    - Create a Python virtual environment.
    - Install Python dependencies (`pyyaml`, `pyModbusTCP`, `paho-mqtt`).
    - Generate a `config.yaml` file based on your inputs.
@@ -77,25 +78,25 @@ The `autoinstall.sh` script generates `config.yaml`:
 The resulting `config.yaml` looks like:
 ```yaml
 mqtt:
-  host: "<MQTT_Broker_IP>"
-  port: 1883
-  username: "<MQTT_Username>"
-  password: "<MQTT_Password>"
-  base_topic: "homeassistant"
+  host: "<MQTT_Broker_IP>"      # MQTT server IP
+  port: 1883                    # MQTT server port
+  username: "<MQTT_Username>"   # MQTT Username
+  password: "<MQTT_Password>"   # MQTT Password
+  base_topic: "homeassistant"   # MQTT topic name 
 inverters:
   inverter1:
-    host: "<Inverter1_IP>"
-    port: 502
-    slave: 255
+    host: "<Inverter1_IP>"  # IP address / hostname of "espressif" modbus server
+    port: 502               # Port (IMPORTANT: you need to change this to 5743 for firmware versions older than 27.52.4.0)
+    slave: 255              # Modbus slave id (usually no change required)
   inverter2:
     host: "<Inverter2_IP>"
     port: 502
     slave: 255
 ```
+As next step, you need to enable and configure the MQTT integration within Home Assistant. After that, the auto discovery should do it's job and the Inverter sensors should appear on your dashboard.
 
 ### Manual Installation (if not using `autoinstall.sh`):
 
-**Manual Installation** (if not using `autoinstall.sh`):
    - Install dependencies:
      ```bash
      sudo apt-get update
