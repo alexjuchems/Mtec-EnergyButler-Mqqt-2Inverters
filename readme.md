@@ -56,7 +56,7 @@ Creates systemd service for auto start
    git clone https://github.com/alexjuchems/Mtec-EnergyButler-Mqqt-2Inverters.git
    cd Mtec-EnergyButler-Mqqt-2Inverters
    ```
-  3. **Run the Auto-Install Script**:
+3. **Run the Auto-Install Script**:
    ```bash
    chmod +x autoinstall.sh
    ./autoinstall.sh
@@ -75,30 +75,30 @@ Creates systemd service for auto start
 
 ### Manual Installation (if not using `autoinstall.sh`):
 
-   - Install dependencies:
-     ```bash
-     sudo apt-get update
-     sudo apt-get install -y python3 python3-pip python3-venv git mosquitto mosquitto-clients
-     ```
-   - Set up a virtual environment:
-     ```bash
-     sudo python3 -m venv venv
-     source venv/bin/activate     #Chek if you need to sudo
-     ```
-   - Install Python packages:
-     ```bash
-     sudo pip install pyyaml pyModbusTCP paho-mqtt    #Check if you need sudo
-     ```
-   - Create `config.yaml`
-      ```bash
-     sudo nano config.yaml
-     ```
-   - Permissions:
-     ```bash
-    sudo chmod 600 config.yaml
-    sudo chmod 644 registers.yaml
-    sudo chmod 755 modbus_mqtt.py
-     ```
+1. Install dependencies:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y python3 python3-pip python3-venv git mosquitto mosquitto-clients
+   ```
+2. Set up a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate     
+   ```
+3. Install Python packages:
+   ```bash
+   pip install pyyaml pyModbusTCP paho-mqtt  
+   ```
+4. Create `config.yaml`
+   ```bash
+   nano config.yaml
+   ```
+5. Permissions:
+   ```bash
+   sudo chmod 600 config.yaml
+   sudo chmod 644 registers.yaml
+   sudo chmod 755 modbus_mqtt.py
+   ```
     
 
 ### Configuration
