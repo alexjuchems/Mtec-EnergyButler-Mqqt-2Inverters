@@ -95,9 +95,9 @@ Creates systemd service for auto start
    ```
 5. Permissions:
    ```bash
-   sudo chmod 600 config.yaml
-   sudo chmod 644 registers.yaml
-   sudo chmod 755 modbus_mqtt.py
+   chmod 600 config.yaml
+   chmod 644 registers.yaml
+   chmod 755 modbus_mqtt.py
    ```
     
 
