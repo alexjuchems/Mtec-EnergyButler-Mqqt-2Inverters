@@ -70,7 +70,7 @@ Creates sysetemd service for auto start
    - Create a Python virtual environment.
    - Install Python dependencies (`pyyaml`, `pyModbusTCP`, `paho-mqtt`).
    - Generate a `config.yaml` file based on your inputs.
-   - Set up a systemd service (`modbus-mqtt`) for automatic operation that depends on the Mosquitto service.
+   - Set up a systemd service (`modbus-mqtt`) for automatic operation that depends on the mosquitto.service.
    - Create a placeholder `registers.yaml` if missing.
 
 ### Manual Installation (if not using `autoinstall.sh`):
