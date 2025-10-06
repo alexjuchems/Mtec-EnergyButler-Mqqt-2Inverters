@@ -157,7 +157,10 @@ After=network-online.target mosquitto.service
 Requires=mosquitto.service network-online.target
 
 [Service]
+Type=simple
+User=$CURRENT_USER
 ExecStartPre=/bin/sleep 5
+ExecStart=$VENV_DIR/bin/python3 $INSTALL_DIR/$SCRIPT_NAME
 WorkingDirectory=$INSTALL_DIR
 Restart=always
 RestartSec=5s
