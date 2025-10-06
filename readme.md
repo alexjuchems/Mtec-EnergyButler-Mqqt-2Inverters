@@ -133,14 +133,19 @@ As next step, you need to enable and configure the MQTT integration within Home 
 
 ## Usage
 ### Managing the Service
-# Start the service
+*** Start the service ***
+```bash
 sudo systemctl start modbus-mqtt
-
-# Stop the service
+```
+*** Stop the service *** 
+```bash
 sudo systemctl stop modbus-mqtt
-
-# Check status
+```
+*** Check status ***
+```bash
 sudo systemctl status modbus-mqtt
-
-# View logs
+```
+*** View logs ***
+```bash
 sudo journalctl -u modbus-mqtt -f
+```
