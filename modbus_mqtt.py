@@ -1,3 +1,4 @@
+# Library Imports
 import yaml
 import os
 import time
@@ -6,10 +7,13 @@ import logging
 import paho.mqtt.client as mqtt
 import json
 import socket
+from collections import defaultdict
 
-# ---------------------------
-# Helper: Wait for network
-# ---------------------------
+#----------
+# Functions
+#----------
+
+# Wait for network functions waits until the network is connected to start the reading
 def wait_for_network(host, port, timeout=60):
     """Wait until network route to broker is available"""
     start = time.time()
@@ -22,59 +26,8 @@ def wait_for_network(host, port, timeout=60):
             time.sleep(5)
     return False
 
-# ---------------------------
-# Load configuration
-# ---------------------------
-# Load config from the working directory
-with open(os.path.join(os.getcwd(), "config.yaml"), "r") as f:
-    config = yaml.safe_load(f)
 
-# Load register definitions from the working directory
-with open(os.path.join(os.getcwd(), "registers.yaml"), "r") as f:
-    registers = yaml.safe_load(f)
-
-# Logging
-#logging.basicConfig()
-#logging.getLogger('pyModbusTCP.client').setLevel(logging.DEBUG)
-
-# ---------------------------
-# Setup MQTT
-# ---------------------------
-# MQTT connection with retry logic
-mqtt_cfg = config["mqtt"]
-client_mqtt = mqtt.Client(client_id="modbus_mqtt", protocol=mqtt.MQTTv5)  # Use MQTTv5 to address deprecation warning
-
-#Waits on network before attempting to connect
-if not wait_for_network(mqtt_cfg["host"], mqtt_cfg["port"]):
-    logging.critical("Network still unreachable after timeout, exiting")
-    raise SystemExit(1)
-
-max_retries = 5
-retry_delay = 5
-
-if mqtt_cfg.get("username"):
-    client_mqtt.username_pw_set(mqtt_cfg["username"], mqtt_cfg["password"])
-
-for attempt in range(max_retries):
-    try:
-        logging.info(f"Attempting to connect to MQTT broker at {mqtt_cfg['host']}:{mqtt_cfg['port']} (attempt {attempt+1}/{max_retries})")
-        client_mqtt.connect(mqtt_cfg["host"], mqtt_cfg["port"], 60)
-        logging.info("Successfully connected to MQTT broker")
-        break
-    except Exception as e:
-        logging.error(f"Failed to connect to MQTT broker: {e}")
-        if attempt < max_retries - 1:
-            logging.info(f"Retrying in {retry_delay} seconds...")
-            time.sleep(retry_delay)
-        else:
-            logging.critical("Max retries reached, exiting")
-            raise
-
-client_mqtt.loop_start() # keep MQTT connection alive
-
-# ---------------------------
-# Helper function to decode registers
-# ---------------------------
+# Function to decode registers
 def decode_registers(raw, reg_info):
     if not raw:
         return None
@@ -125,9 +78,8 @@ def decode_registers(raw, reg_info):
         return value / scale
     return value
 
-# ---------------------------
+
 # Publish MQTT Discovery configs
-# ---------------------------
 def publish_discovery(inv_name, reg_id, reg_info):
     object_id = reg_info.get("mqtt", reg_id)
     state_topic = f"{mqtt_cfg['base_topic']}/sensor/{inv_name}/{object_id}/state"
@@ -156,6 +108,117 @@ def publish_discovery(inv_name, reg_id, reg_info):
     discovery_topic = f"{mqtt_cfg['base_topic']}/sensor/{inv_name}/{object_id}/config"
     client_mqtt.publish(discovery_topic, json.dumps(payload), retain=True)
 
+# Setup MQTT
+def setup_mqtt(config):
+    # Wait for network before attempting to connect
+    if not wait_for_network(mqtt_cfg["host"], mqtt_cfg["port"]):
+        logging.critical("Network still unreachable after timeout, exiting")
+        raise SystemExit(1)
+
+    max_retries = 5
+    retry_delay = 5
+
+    if mqtt_cfg.get("username"):
+        client_mqtt.username_pw_set(mqtt_cfg["username"], mqtt_cfg["password"])
+
+    for attempt in range(max_retries):
+        try:
+            logging.info(
+                f"Attempting to connect to MQTT broker at "
+                f"{mqtt_cfg['host']}:{mqtt_cfg['port']} "
+                f"(attempt {attempt + 1}/{max_retries})"
+            )
+            client_mqtt.connect(mqtt_cfg["host"], mqtt_cfg["port"], 60)
+            logging.info("Successfully connected to MQTT broker")
+            break
+        except Exception as e:
+            logging.error(f"Failed to connect to MQTT broker: {e}")
+            if attempt < max_retries - 1:
+                logging.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                logging.critical("Max retries reached, exiting")
+                raise
+
+    client_mqtt.loop_start()
+    return client_mqtt
+
+
+# Pseudo-register calculators
+def calculate_pseudo_registers(group, values):
+    """Calculate pseudo-register values from real register readings.
+
+    Args:
+        group: The group name being processed.
+        values: Dict of {reg_id: decoded_value} from all groups read so far this cycle.
+
+    Returns:
+        Dict of {reg_id: calculated_value} for pseudo-registers in this group.
+    """
+    results = {}
+
+    if group == "now-base":
+        # consumption = pv + battery_discharge - battery_charge - grid_injection
+        # TODO: fill in real calculation
+        results["consumption"] = None
+
+    elif group == "day":
+        # consumption-day = pv_day + battery_discharge_day - battery_charge_day - grid_feed_day + grid_purchase_day
+        # TODO: fill in real calculation
+        results["consumption-day"] = None
+        results["autarky-day"] = None
+        results["ownconsumption-day"] = None
+
+    elif group == "total":
+        # Same logic but with total values
+        # TODO: fill in real calculation
+        results["consumption-total"] = None
+        results["autarky-total"] = None
+        results["ownconsumption-total"] = None
+
+    return results
+
+#---------------------------------
+# Load configuration and registers
+#---------------------------------
+
+# Load config from the working directory
+with open(os.path.join(os.getcwd(), "config.yaml"), "r") as f:
+    config = yaml.safe_load(f)
+
+# Load register definitions from the working directory
+with open(os.path.join(os.getcwd(), "registers.yaml"), "r") as f:
+    registers = yaml.safe_load(f)
+
+#----------------------
+# Setup mqtt connection
+#----------------------
+
+# Global modules
+mqtt_cfg = config["mqtt"]
+client_mqtt = mqtt.Client(client_id="modbus_mqtt", protocol=mqtt.MQTTv5)
+
+#connect to broker
+setup_mqtt(config)
+
+#--------------
+# Modbus Clients
+#--------------
+modbus_clients = {}
+for inv_name, inv in config["inverters"].items():
+    client = ModbusClient(inv["host"], port=inv["port"], timeout=5, unit_id=inv["slave"])
+    client.open()
+    modbus_clients[inv_name] = client
+
+# ---------------------------
+# Pre-process: group registers
+# ---------------------------
+register_groups = defaultdict(dict)
+for reg_id, reg_info in registers.items():
+    group = reg_info.get("group", "ungrouped")
+    register_groups[group][reg_id] = reg_info
+
+
 # ---------------------------
 # Setup discovery once
 # ---------------------------
@@ -165,34 +228,53 @@ for inv_name, inv in config["inverters"].items():
 
 print("✅ MQTT discovery messages published. Check Home Assistant → Devices → MQTT")
 
+
+
 # ---------------------------
 # Main loop: read and publish values
 # ---------------------------
-
+interval = 1
 while True:
+    start = time.monotonic()
+
     for inv_name, inv in config["inverters"].items():
-        client = ModbusClient(inv["host"], port=inv["port"], timeout=5, unit_id=inv["slave"])
-        if client.open():
-            for reg_id, reg_info in registers.items():
-                length = reg_info.get("length")
+        client = modbus_clients[inv_name]
 
-                if length:
-                    # Real Modbus register
-                    reg_address = int(reg_id)
-                    raw = client.read_holding_registers(reg_address, length)
-                    value = decode_registers(raw, reg_info)
-                else:
-                    # Pseudo-register → calculate or use placeholder
-                    # Example placeholder:
-                    value = None  # or some computed value
+        if not client.is_open:
+            logging.warning(f"Reconnecting to {inv_name}...")
+            client.open()
 
-                # Publish the value to MQTT regardless of real/pseudo
-                object_id = reg_info.get("mqtt", reg_id)
-                state_topic = f"{mqtt_cfg['base_topic']}/sensor/{inv_name}/{object_id}/state"
-                client_mqtt.publish(state_topic, str(value))
+        if client.is_open:
+            all_values = {}  # collect all readings for pseudo-register calculations
 
-            client.close()
+            for group_name, group_regs in register_groups.items():
+                # Read all real (Modbus) registers in this group
+                for reg_id, reg_info in group_regs.items():
+                    length = reg_info.get("length")
+                    if length:
+                        reg_address = int(reg_id)
+                        raw = client.read_holding_registers(reg_address, length)
+                        value = decode_registers(raw, reg_info)
+                        all_values[reg_id] = value
+                    # Skip pseudo-registers during the read phase
+
+                # Calculate pseudo-registers for this group
+                pseudo_values = calculate_pseudo_registers(group_name, all_values)
+
+                # Publish everything in this group
+                for reg_id, reg_info in group_regs.items():
+                    length = reg_info.get("length")
+                    if length:
+                        value = all_values.get(reg_id)
+                    else:
+                        value = pseudo_values.get(reg_id)
+
+                    if value is not None:
+                        object_id = reg_info.get("mqtt", reg_id)
+                        state_topic = f"{mqtt_cfg['base_topic']}/sensor/{inv_name}/{object_id}/state"
+                        client_mqtt.publish(state_topic, str(value))
         else:
             print(f"❌ Failed to connect to {inv_name}")
 
-    time.sleep(1)
+    elapsed = time.monotonic() - start
+    time.sleep(max(0, interval - elapsed))
